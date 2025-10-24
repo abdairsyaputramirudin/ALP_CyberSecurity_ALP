@@ -110,5 +110,3 @@ Authorization: Bearer <accessToken>
 | Invalid/expired token | Login ulang, periksa `JWT_EXPIRES` |
 | MongoDB tidak tersambung | Pakai `mongodb://127.0.0.1:27017/ecommerce-db` (bukan `localhost`) |
 
-## 📘 Lisensi
-Hanya digunakan untuk keperluan akademik (Tugas ALP Cyber Security).
