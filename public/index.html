@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>E-Commerce Auth Demo</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #111;
+        --card: #fff;
+        --border: #ddd;
+        --muted: #777;
+        --code: #f6f6f6;
+        --pre: #f8f8f8;
+        --input: #fff;
+        --btn: #f5f5f5;
+      }
+      .dark {
+        --bg: #0f1115;
+        --fg: #e8e8e8;
+        --card: #16181d;
+        --border: #2a2d33;
+        --muted: #9aa0a6;
+        --code: #1d2128;
+        --pre: #1b1f27;
+        --input: #12151b;
+        --btn: #262a31;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family: system-ui, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 0 12px;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+      h1 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h2 {
+        margin-top: 28px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 12px 0;
+        overflow-x: auto;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      input,
+      button,
+      select {
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--input);
+        color: var(--fg);
+      }
+      button {
+        cursor: pointer;
+        background: var(--btn);
+      }
+      code {
+        background: var(--code);
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid var(--border);
+        padding: 8px;
+        text-align: left;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      pre {
+        background: var(--pre);
+        padding: 8px;
+        border-radius: 8px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 13px;
+        border: 1px solid var(--border);
+      }
+      /* toggle button */
+      .toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--btn);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>
+      E-Commerce Demo
+      <button id="theme-toggle" class="toggle" type="button">🌙 Dark</button>
+    </h1>
+    <p class="muted">JWT Login • Google Login • RBAC • ABAC (produk)</p>
+
+    <div class="card">
+      <h2>Status</h2>
+      <div>Token: <code id="token-short" class="muted">-</code></div>
+      <div>Decoded: <code id="claims" class="muted">-</code></div>
+      <div class="row" style="margin-top: 8px">
+        <button id="btn-clear">Clear Token</button>
+        <button id="btn-refresh">Refresh View</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Register (manual)</h2>
+      <div class="row">
+        <input id="reg-name" placeholder="Name" />
+        <input id="reg-email" placeholder="Email" />
+        <input id="reg-pass" placeholder="Password" type="password" />
+      </div>
+      <div class="row" style="margin-top: 6px">
+        <select id="reg-role">
+          <option value="CUSTOMER">CUSTOMER</option>
+          <option value="SELLER">SELLER</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+        <input id="reg-store" placeholder="(optional) storeId untuk SELLER" />
+        <button id="btn-register">Register</button>
+      </div>
+      <pre id="reg-out" class="muted"></pre>
+    </div>
+
+    <div class="card">
+      <h2>Login (JWT)</h2>
+      <div class="row">
+        <input id="login-email" placeholder="Email" />
+        <input id="login-pass" placeholder="Password" type="password" />
+        <button id="btn-login">Login</button>
+      </div>
+      <pre id="login-out" class="muted"></pre>
+    </div>
+
+    <div class="card">
+      <h2>Login dengan Google</h2>
+      <p>
+        Klik tombol di bawah → selesaikan login Google → halaman callback akan
+        menampilkan JSON berisi <code>accessToken</code>. Salin token itu ke
+        sini.
+      </p>
+      <div class="row">
+        <a href="/auth/google" target="_blank"
+          ><button>Login via Google</button></a
+        >
+        <input
+          id="google-token"
+          placeholder="Paste accessToken dari hasil Google di sini"
+          style="flex: 1"
+        />
+        <button id="btn-use-google-token">Use Token</button>
+      </div>
+      <pre id="google-out" class="muted"></pre>
+    </div>
+
+    <div class="card">
+      <h2>Produk</h2>
+      <div class="row">
+        <button id="btn-list">GET /products</button>
+      </div>
+      <table style="margin-top: 8px">
+        <thead>
+          <tr>
+            <th>_id</th>
+            <th>name</th>
+            <th>price</th>
+            <th>stock</th>
+            <th>storeId</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-products">
+          <tr>
+            <td colspan="5" class="muted">Belum ada data</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top: 16px">Create Product (Admin/Seller)</h3>
+      <div class="row">
+        <input id="p-name" placeholder="name" />
+        <input id="p-price" placeholder="price" type="number" />
+        <input id="p-stock" placeholder="stock" type="number" />
+        <button id="btn-create">POST /products</button>
+      </div>
+      <pre id="prod-out" class="muted"></pre>
+
+      <h3 style="margin-top: 16px">Update / Delete (Gabungan RBAC + ABAC)</h3>
+      <div class="row">
+        <input id="p-id" placeholder="productId" style="flex: 1" />
+        <input id="p-new-price" placeholder="new price" type="number" />
+        <button id="btn-update">PUT /products/:id</button>
+        <button id="btn-delete">DELETE /products/:id</button>
+      </div>
+      <pre id="prod-edit-out" class="muted"></pre>
+    </div>
+
+    <script>
+      const API = location.origin; // http://localhost:3000
+
+      // ---- tiny helpers ----
+      const $ = (id) => document.getElementById(id);
+      const saveToken = (t) => localStorage.setItem("token", t || "");
+      const getToken = () => localStorage.getItem("token") || "";
+      const b64 = (s) =>
+        decodeURIComponent(
+          atob(s.replace(/-/g, "+").replace(/_/g, "/"))
+            .split("")
+            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        );
+      const decodeJwt = (tok) => {
+        try {
+          return JSON.parse(b64(tok.split(".")[1] || ""));
+        } catch {
+          return null;
+        }
+      };
+      const showStatus = () => {
+        const t = getToken();
+        $("token-short").textContent = t ? t.slice(0, 16) + "..." : "-";
+        const claims = t ? decodeJwt(t) : null;
+        $("claims").textContent = claims ? JSON.stringify(claims) : "-";
+      };
+      $("btn-clear").onclick = () => {
+        saveToken("");
+        showStatus();
+      };
+      $("btn-refresh").onclick = showStatus;
+      showStatus();
+
+      // ---- register ----
+      $("btn-register").onclick = async () => {
+        const body = {
+          name: $("reg-name").value,
+          email: $("reg-email").value,
+          password: $("reg-pass").value,
+          role: $("reg-role").value,
+        };
+        const store = $("reg-store").value.trim();
+        if (store) body.storeId = store;
+        const r = await fetch(API + "/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        $("reg-out").textContent =
+          r.status + " " + r.statusText + "\n" + (await r.text());
+      };
+
+      // ---- login (JWT) ----
+      $("btn-login").onclick = async () => {
+        const r = await fetch(API + "/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: $("login-email").value,
+            password: $("login-pass").value,
+          }),
+        });
+        const txt = await r.text();
+        $("login-out").textContent = r.status + " " + r.statusText + "\n" + txt;
+        try {
+          const { accessToken } = JSON.parse(txt);
+          if (accessToken) {
+            saveToken(accessToken);
+            showStatus();
+          }
+        } catch {}
+      };
+
+      // ---- Google token paste ----
+      $("btn-use-google-token").onclick = () => {
+        const t = $("google-token").value.trim();
+        if (!t) return ($("google-out").textContent = "Kosong.");
+        saveToken(t);
+        showStatus();
+        $("google-out").textContent = "Token saved to localStorage.";
+      };
+
+      // ---- list products ----
+      $("btn-list").onclick = async () => {
+        const r = await fetch(API + "/products");
+        const data = await r.json().catch(() => []);
+        const tbody = $("tbl-products");
+        tbody.innerHTML = "";
+        if (!Array.isArray(data) || !data.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="5" class="muted">Kosong</td></tr>';
+          return;
+        }
+        data.forEach((p) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${p._id || ""}</td><td>${p.name}</td><td>${
+            p.price
+          }</td><td>${p.stock}</td><td>${p.storeId || ""}</td>`;
+          tbody.appendChild(tr);
+        });
+      };
+
+      // ---- create product (needs token, RBAC) ----
+      $("btn-create").onclick = async () => {
+        const token = getToken();
+        const r = await fetch(API + "/products", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({
+            name: $("p-name").value,
+            price: Number($("p-price").value || 0),
+            stock: Number($("p-stock").value || 0),
+          }),
+        });
+        $("prod-out").textContent =
+          r.status + " " + r.statusText + "\n" + (await r.text());
+      };
+
+      // ---- update / delete (RBAC + ABAC) ----
+      $("btn-update").onclick = async () => {
+        const token = getToken();
+        const id = $("p-id").value.trim();
+        const price = Number($("p-new-price").value || 0);
+        const r = await fetch(API + "/products/" + id, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ price }),
+        });
+        $("prod-edit-out").textContent =
+          r.status + " " + r.statusText + "\n" + (await r.text());
+      };
+
+      $("btn-delete").onclick = async () => {
+        const token = getToken();
+        const id = $("p-id").value.trim();
+        const r = await fetch(API + "/products/" + id, {
+          method: "DELETE",
+          headers: { Authorization: "Bearer " + token },
+        });
+        $("prod-edit-out").textContent =
+          r.status + " " + r.statusText + "\n" + (await r.text());
+      };
+      // ---- theme init ----
+      const applyTheme = (t) => {
+        document.body.classList.toggle("dark", t === "dark");
+        document.getElementById("theme-toggle").textContent =
+          t === "dark" ? "☀️ Light" : "🌙 Dark";
+      };
+      const stored = localStorage.getItem("theme");
+      const prefersDark =
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches;
+      let theme = stored || (prefersDark ? "dark" : "light");
+      applyTheme(theme);
+
+      // ---- toggle handler ----
+      document.getElementById("theme-toggle").onclick = () => {
+        theme = document.body.classList.contains("dark") ? "light" : "dark";
+        localStorage.setItem("theme", theme);
+        applyTheme(theme);
+      };
+    </script>
+  </body>
+</html>
